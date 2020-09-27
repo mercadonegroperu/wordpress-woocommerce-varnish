@@ -26,9 +26,10 @@ acl purge {
 
 sub vcl_init {
   # Called when VCL is loaded, before any requests pass through it. Typically used to initialize VMODs.
-  new vdir = directors.round_robin();
-  vdir.add_backend(server1);
-  #vdir.add_backend(server2);
+  new vdir_domain1 = directors.round_robin();
+  vdir_domain1.add_backend(server1);
+  new vdir_domain2 = directors.round_robin();
+  vdir_domain2.add_backend(server1);
   #vdir.add_backend(server3);
 }
 
@@ -39,8 +40,14 @@ sub vcl_recv {
   # which backend to use.
   # also used to modify the request
 
-  # send all traffic to the vdir director
-  set req.backend_hint = vdir.backend();
+  # Config for multiple domains
+  
+  if (req.http.host == "domain1.com") {
+     #You will need the following line only if your backend has multiple virtual host names
+     set req.http.host = "domain1.com";
+     # send all traffic to the vdir director
+     set req.backend_hint = vdir_domain1.backend();
+  }
 
   # TURN OFF CACHE when needed (just uncomment this only when needed)
   # return(pass);
